@@ -149,25 +149,25 @@
             const message = "TE AMO";
             
             const rect = textPlaceholder.getBoundingClientRect();
-            
             if (rect.width === 0 || rect.height === 0) {
                 setTimeout(generateTextPoints, 100);
                 return;
             }
-            
+
             const fontSize = Math.min(rect.width * 0.5, rect.height * 0.8);
-            
             ctx.font = `bold ${fontSize}px Arial, sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            
-            // 🔽 aquí bajamos el texto un poco (10% de la altura del canvas)
-            const offsetY = canvas.height * 0.1;
-            ctx.fillText(message, canvas.width / 2, canvas.height / 2 + offsetY);
-            
+
+            // 📌 Ahora lo posicionamos relativo al osito
+            const bearRect = bearGif.getBoundingClientRect();
+            const textX = canvas.width / 2; // centrado en pantalla
+            const textY = bearRect.bottom + fontSize; // justo debajo del osito
+
+            ctx.fillText(message, textX, textY);
+
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
-            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             const step = 10;
@@ -179,7 +179,6 @@
                     }
                 }
             }
-            
             targetPoints.sort(() => Math.random() - 0.5);
         }
 
@@ -196,7 +195,6 @@
         function animate() {
             requestAnimationFrame(animate);
             ctx.clearRect(0, 0, canvas.width, canvas.height); 
-            
             hearts.forEach(heart => {
                 heart.update();
                 heart.draw();
@@ -215,7 +213,7 @@
         if (bearGif.complete) {
             bearGif.onload();
         }
-
     </script>
 </body>
 </html>
+
