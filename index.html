@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODE</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #fbd3e9, #bbd2c5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    padding-top: 10px; /* contenido más arriba */
+  }
+
+  canvas { display: block; position: absolute; top:0; left:0; }
+  #starCanvas { z-index: 0; }
+  #heartCanvas { z-index: 1; }
+
+  .title {
+    text-align: center;
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    color: red;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+    z-index: 3;
+    margin: 2rem;
+    margin-bottom: 1rem;
+    font-family: cursive;
+    animation: fadeInDown 1.5s ease-out forwards;
+    position: relative;
+  }
+
+  #animation-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 90%;
+    max-width: 800px;
+    z-index: 2;
+    gap: 6rem;
+  }
+
+  #bearGif {
+    width: clamp(100px, 25vw, 200px);
+    height: auto;
+    flex-shrink: 0;
+  }
+
+  #text-placeholder { flex-grow: 1; height: clamp(100px, 25vw, 200px); }
+</style>
+</head>
+<body>
+
+<h1 class="title">
+  ¡Mi amor por ti no tiene final; quiero quedarme a tu lado por siempre, 
+  en cada amanecer y en cada noche, compartiendo alegrías, superando miedos 
+  y construyendo un futuro juntos!.
+</h1>
+
+<div id="animation-container">
+  <img id="bearGif" src="https://media.tenor.com/zWTsSqX7EHYAAAAj/dudu-pew-dudu-gun.gif" alt="Osito disparando corazones">
+  <div id="text-placeholder"></div>
+</div>
+
+<canvas id="starCanvas"></canvas>
+<canvas id="heartCanvas"></canvas>
+
+<script>
+/* ===== ESTRELLAS ===== */
+const starCanvas = document.getElementById("starCanvas");
+const starCtx = starCanvas.getContext("2d");
+let stars = [];
+
+function setupStars() {
+  starCanvas.width = window.innerWidth;
+  starCanvas.height = window.innerHeight;
+  stars = [];
+  for (let i = 0; i < 150; i++) {
+    stars.push({
+      x: Math.random()*starCanvas.width,
+      y: Math.random()*starCanvas.height,
+      radius: Math.random()*1.5,
+      alpha: Math.random(),
+      speed: Math.random()*0.02+0.005
+    });
+  }
+}
+
+function animateStars() {
+  requestAnimationFrame(animateStars);
+  starCtx.clearRect(0,0,starCanvas.width,starCanvas.height);
+  starCtx.fillStyle = "white";
+  stars.forEach(star=>{
+    star.alpha += star.speed;
+    const opacity = 0.5+Math.sin(star.alpha)*0.5;
+    starCtx.globalAlpha = opacity;
+    starCtx.beginPath();
+    starCtx.arc(star.x,star.y,star.radius,0,Math.PI*2);
+    starCtx.fill();
+  });
+  starCtx.globalAlpha = 1;
+}
+
+window.addEventListener("resize", setupStars);
+setupStars();
+animateStars();
+
+/* ===== CORAZONES ===== */
+const canvas = document.getElementById('heartCanvas');
+const ctx = canvas.getContext('2d');
+const bearGif = document.getElementById('bearGif');
+const textPlaceholder = document.getElementById('text-placeholder');
+
+let hearts = [];
+let targetPoints = [];
+let pointIndex = 0;
+
+function setupCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+
+function handleResize() {
+  setupCanvas();
+  hearts=[]; targetPoints=[]; pointIndex=0;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  setTimeout(generateTextPoints,100);
+}
+
+class Heart{
+  constructor(startX,startY,targetX,targetY){
+    this.x=startX; this.y=startY; this.targetX=targetX; this.targetY=targetY;
+    this.size = 6; // tamaño reducido para que letra sea clara
+    this.targetSize = 8;
+    this.speed=Math.random()*3+4;
+    this.angle=Math.atan2(targetY-startY,targetX-startX);
+    this.isSettled=false;
+    this.color="#FF4D6D"; // color uniforme
+  }
+  draw(){
+    ctx.fillStyle=this.color;
+    ctx.beginPath();
+    ctx.moveTo(this.x,this.y-this.size/2);
+    ctx.bezierCurveTo(this.x+this.size/2,this.y-this.size,this.x+this.size,this.y,this.x,this.y+this.size);
+    ctx.bezierCurveTo(this.x-this.size,this.y,this.x-this.size/2,this.y-this.size,this.x,this.y-this.size/2);
+    ctx.fill(); ctx.closePath();
+  }
+  update(){
+    if(this.isSettled) return;
+    const dx=this.targetX-this.x; const dy=this.targetY-this.y;
+    const distance=Math.sqrt(dx*dx+dy*dy);
+    if(distance<this.speed){ this.x=this.targetX; this.y=this.targetY; this.isSettled=true; }
+    else { this.x+=Math.cos(this.angle)*this.speed; this.y+=Math.sin(this.angle)*this.speed; }
+    if(this.size<this.targetSize) this.size+=0.1;
+  }
+}
+
+function generateTextPoints(){
+  const messages=["TE AMO","YANETH"];
+  const rect=textPlaceholder.getBoundingClientRect();
+  if(rect.width===0||rect.height===0){ setTimeout(generateTextPoints,100); return; }
+
+  let fontSize=canvas.width*0.18;
+  if(canvas.width<500) fontSize=canvas.width*0.25;
+  fontSize=Math.min(fontSize,canvas.height*0.25);
+  ctx.font=`bold ${fontSize}px Arial, sans-serif`;
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+
+  const bearRect=bearGif.getBoundingClientRect();
+  const textX=canvas.width/2;
+  const startY=bearRect.bottom + fontSize;
+  const lineSpacing = fontSize*1.8; // más cerca
+
+  targetPoints=[];
+
+  messages.forEach((message,i)=>{
+    const textY=startY + i*lineSpacing;
+    ctx.fillText(message,textX,textY);
+    const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    const data=imageData.data;
+    let step=canvas.width<500?3:4; // más detalle = letras definidas
+    for(let y=0;y<canvas.height;y+=step){
+      for(let x=0;x<canvas.width;x+=step){
+        const alphaIndex=(y*canvas.width+x)*4+3;
+        if(data[alphaIndex]>128) targetPoints.push({x:x,y:y});
+      }
+    }
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  });
+
+  targetPoints.sort(()=>Math.random()-0.5);
+}
+
+function shootHeart(){
+  if(pointIndex>=targetPoints.length) return;
+  const rect=bearGif.getBoundingClientRect();
+  const startX=rect.left+rect.width*0.9;
+  const startY=rect.top+rect.height*0.8;
+  const target=targetPoints[pointIndex];
+  hearts.push(new Heart(startX,startY,target.x,target.y));
+  pointIndex++;
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  hearts.forEach(h=>{ h.update(); h.draw(); });
+}
+
+window.addEventListener('resize', handleResize);
+
+bearGif.onload = ()=>{
+  setupCanvas();
+  generateTextPoints();
+  animate();
+  setInterval(shootHeart,60); // velocidad para que letra se forme clara
+}
+if(bearGif.complete) bearGif.onload();
+</script>
+
+</body>
+</html>
+
